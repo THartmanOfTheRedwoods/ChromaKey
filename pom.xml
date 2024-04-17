@@ -1,0 +1,116 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>edu.redwoods.cis18</groupId>
+  <artifactId>ChromaKey</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <name>Maven ChromaKey</name>
+  <url>http://maven.apache.org</url>
+  <properties>
+    <opencv.version>4.9.0-0</opencv.version>
+    <javafx.version>22</javafx.version>
+    <main.class>Launcher</main.class>
+    <release.version>22</release.version>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.openpnp</groupId>
+      <artifactId>opencv</artifactId>
+      <version>${opencv.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-base</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <!-- Maven compiler plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${release.version}</release>
+        </configuration>
+      </plugin>
+
+      <!-- Maven exec plugin to test and exec code during build -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Djava.library.path=/usr/local/share/java/opencv4</argument>
+            <argument>-classpath</argument>
+            <!-- This will generate the classpath for us: -->
+            <classpath/>
+            <!-- Main class -->
+            <argument>${main.class}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+      <!--
+              <mainClass>${main.class}</mainClass>
+              <arguments>
+                <argument>-Djava.library.path=${project.build.directory}/native-libs</argument>
+                <argument>-classpath</argument>
+                <classpath>
+                  <path refid="maven.compile.classpath" />
+                  <path>${project.build.outputDirectory}</path>
+                </classpath>
+              </arguments>
+              -->
+
+      <!-- Maven shade plugin to create a fat JAR -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>${main.class}</mainClass>
+            </transformer>
+          </transformers>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
