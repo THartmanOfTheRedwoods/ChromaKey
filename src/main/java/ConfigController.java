@@ -6,6 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.stage.WindowEvent;
 import org.opencv.videoio.VideoCapture;
 
 import java.io.IOException;
@@ -45,10 +46,17 @@ public class ConfigController implements Initializable {
     @FXML
     private Button buttonSaveConfig;
     private final Configuration configuration;
+    private final EventBus eventBus;
 
     public ConfigController() {
         // Called before @FXML annotations are injected.
+        eventBus = EventBus.getInstance();
         configuration = Configuration.getInstance();
+        eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), (eventData) -> {
+            // Acknowledge parent close request that we closed down.
+            eventBus.fireEvent("CHILD_CLOSE_ACK",
+                    new EventBusData<Object>("CHILD_CLOSE_ACK", "ConfigController"));
+        });
     }
 
     public void initialize(URL url, ResourceBundle resourceBundle) {

@@ -11,6 +11,7 @@ import java.io.IOException;
 public class ChromaKey extends Application {
 
     private final static EventBus eventBus = EventBus.getInstance();
+    private boolean allDone = false; // Variable used to control exit of app + all threads.
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -26,12 +27,19 @@ public class ChromaKey extends Application {
         primaryStage.setScene(scene);
 
         primaryStage.setOnCloseRequest(event -> {
+            // Register to get notified when child controllers/threads exit.
+            eventBus.register("CHILD_CLOSE_ACK", (eventData) -> {
+                allDone = true; // Once exited, we set this to true to allow the application to exit.
+            });
+            // Fire close event so child controllers/threads will close down and exit.
             eventBus.fireEvent(event.getEventType().getName(),
                     new EventBusData<Object>(event.getEventType().getName(), null));
             // Let's sleep a bit to allow the child threads a chance to close.
             try {
-                // @TODO: Use the eventBus to listen for child thread completion and exit cleanly.
-                Thread.sleep(5000);
+                // Busy wait until child controller notifies us that its done.
+                while(!allDone) {
+                    Thread.sleep(500);
+                }
             } catch (InterruptedException e) { }
         });
 

@@ -38,6 +38,8 @@ public class ChromaKeyController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        menuItemImageView.setDisable(true);  // Start with the imageView active
+        menuItemPreferences.setDisable(false);
         contentLoader = new FXMLLoader(getClass().getResource("imageView.fxml"));
         try {
             Parent initialContent = contentLoader.load();
@@ -48,20 +50,22 @@ public class ChromaKeyController implements Initializable {
     }
 
     public void swapContent(String fxmlFileName) throws IOException {
+        // Do this first to make sure content panes don't swap before the event is triggered.
+        eventBus.fireEvent("SCENE_SWAP_REQUEST",
+                new EventBusData<String>("SCENE_SWAP_REQUEST", fxmlFileName));
         // Load the new content FXML
         FXMLLoader newLoader = new FXMLLoader(getClass().getResource(fxmlFileName));
         Parent newContent = newLoader.load();
-
         // Replace content pane with the new content
         contentPane.getChildren().clear();
         contentPane.getChildren().add(newContent);
-        eventBus.fireEvent("SCENE_SWAP_REQUEST",
-                new EventBusData<String>("SCENE_SWAP_REQUEST", fxmlFileName));
     }
 
     @FXML
     public void onPreferencesSelected(ActionEvent event) {
         try {
+            menuItemImageView.setDisable(false);
+            menuItemPreferences.setDisable(true);
             swapContent("config.fxml"); // Replace with the FXML file for content 1
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,6 +75,8 @@ public class ChromaKeyController implements Initializable {
     @FXML
     public void onImageSelected(ActionEvent event) {
         try {
+            menuItemImageView.setDisable(true);
+            menuItemPreferences.setDisable(false);
             swapContent("imageView.fxml"); // Replace with the FXML file for content 2
         } catch (IOException e) {
             e.printStackTrace();

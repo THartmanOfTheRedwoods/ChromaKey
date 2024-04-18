@@ -70,19 +70,12 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         cameraThread = new Thread(this::processAndDisplayFrames);
         cameraThread.start();
         // Listen for application close events, so we can close down the thread politely
-        // @TODO: Fix multiple registration issue for this controller!!!
-        /*
-        eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), (eventData) -> {
-            haltThread();
-        });
-        */
         eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
         eventBus.register("SCENE_SWAP_REQUEST", this);
     }
 
     @Override
     public void onEvent(EventBusData<?> eventData) {
-        System.out.println(eventData.getEventData());
         // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
         // in the EventBus
         eventBus.unregister("SCENE_SWAP_REQUEST", this);
@@ -105,13 +98,19 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         threadStopFlag = true;
         capture.release();
         try {
+            cameraThread.interrupt(); // This is likely unnecessary but putting this here anyway.
             cameraThread.join(4000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        // Acknowledge parent close request that we closed down.
+        eventBus.fireEvent("CHILD_CLOSE_ACK",
+                new EventBusData<Object>("CHILD_CLOSE_ACK", "ImageController"));
     }
 
     private void processAndDisplayFrames() {
+        //System.out.println("Starting " + Thread.currentThread().getName());
+
         Mat frame = new Mat();
         Mat hsvFrame = new Mat();
         Mat mask = new Mat();
@@ -125,7 +124,12 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         boolean sizingErrorReported = false;
 
         while(!threadStopFlag) {
-            System.out.println("-");
+            // Check for interrupt periodically
+            if (Thread.interrupted()) {
+                System.err.println("Thread Interrupted.");
+                break;
+            }
+
             // Capture a frame from the webcam
             capture.read(frame);
             //capture.retrieve(frame); // Takes a single snapshot (-:
@@ -169,8 +173,6 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
             Mat currentResult = matBuffer.swap(result);
 
             // Apply the replacement image to the original frame where the mask is applied
-            // @TODO: Figure out replacementMat bug where this line is crashing OpenCV's
-            //   native method, but didn't use to. Maybe has to do with no green in image?
             try {
                 Core.bitwise_or(replacementMat, replacementMat, currentResult, mask);
             } catch(CvException cve) {
@@ -193,7 +195,9 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
             } catch (InterruptedException e) {
                 //e.printStackTrace();
                 System.err.println("Camera thread interrupted.");
+                break;
             }
         }
+        //System.out.println("Stopping " + Thread.currentThread().getName());
     }
 }
