@@ -76,16 +76,15 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
 
     @Override
     public void onEvent(EventBusData<?> eventData) {
-        // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
-        // in the EventBus
-        eventBus.unregister("SCENE_SWAP_REQUEST", this);
-        eventBus.unregister(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
-
         String data = "";
         if(eventData.getEventData() != null) { data = eventData.getEventData().toString(); }
 
         if(eventData.getType().equals("SCENE_SWAP_REQUEST")) {
             if (!data.equals("imageView.fxml")) { // Only halt if not my own view being changed to.
+                // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
+                // in the EventBus
+                eventBus.unregister("SCENE_SWAP_REQUEST", this);
+                eventBus.unregister(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
                 haltThread();
             }
         } else {
