@@ -25,9 +25,8 @@ public class EventBus {
         if (eventListeners == null) {
             eventListeners = new HashSet<>();
             listeners.put(eventName, eventListeners);
-        } else {
-            eventListeners.add(listener);
         }
+        eventListeners.add(listener);
     }
 
     public void fireEvent(String eventName, EventBusData<?> eventData) {

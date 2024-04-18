@@ -71,17 +71,28 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         cameraThread.start();
         // Listen for application close events, so we can close down the thread politely
         // @TODO: Fix multiple registration issue for this controller!!!
+        /*
         eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), (eventData) -> {
             haltThread();
         });
+        */
+        eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
         eventBus.register("SCENE_SWAP_REQUEST", this);
     }
 
     @Override
-    public void onEvent(EventBusData eventData) {
-        System.out.println(eventData);
+    public void onEvent(EventBusData<?> eventData) {
+        System.out.println(eventData.getEventData());
+        // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
+        // in the EventBus
+        eventBus.unregister("SCENE_SWAP_REQUEST", this);
+        eventBus.unregister(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
+
+        String data = "";
+        if(eventData.getEventData() != null) { data = eventData.getEventData().toString(); }
+
         if(eventData.getType().equals("SCENE_SWAP_REQUEST")) {
-            if (!eventData.equals("imageView.fxml")) { // Only halt if not my own view being changed to.
+            if (!data.equals("imageView.fxml")) { // Only halt if not my own view being changed to.
                 haltThread();
             }
         } else {
@@ -90,9 +101,6 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
     }
 
     private void haltThread() {
-        // If I'm being asked to halt, its likely a new object will later be created, so I also need to unregister
-        // in the EventBus
-        eventBus.unregister("SCENE_SWAP_REQUEST", this);
         // Release resources when the window is closed
         threadStopFlag = true;
         capture.release();
@@ -117,6 +125,7 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         boolean sizingErrorReported = false;
 
         while(!threadStopFlag) {
+            System.out.println("-");
             // Capture a frame from the webcam
             capture.read(frame);
             //capture.retrieve(frame); // Takes a single snapshot (-:
