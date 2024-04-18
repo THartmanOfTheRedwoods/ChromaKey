@@ -117,9 +117,16 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         Mat result;
 
         // Define lower and upper bounds for green color in HSV (Hue, Saturation, Value)
-        // @TODO: Set the lower and upper bound with the configuration Singleton.
-        Scalar lowerBound = new Scalar(40, 40, 40);  // Lower Green
-        Scalar upperBound = new Scalar(80, 255, 255); // Upper Green
+        int hue = (int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue();
+        int sat = (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue();
+        int val = (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue();
+        System.out.printf("L-H:%d,S:%d,V:%d%n", hue, sat, val);
+        Scalar lowerBound = new Scalar(hue, sat, val);  // Lower Green
+        hue = (int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue();
+        sat = (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue();
+        val = (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue();
+        System.out.printf("U-H:%d,S:%d,V:%d%n", hue, sat, val);
+        Scalar upperBound = new Scalar(hue, sat, val);  // Upper Green
         boolean sizingErrorReported = false;
 
         while(!threadStopFlag) {

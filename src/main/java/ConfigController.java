@@ -2,10 +2,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.WindowEvent;
 import org.opencv.videoio.VideoCapture;
 
@@ -45,6 +42,18 @@ public class ConfigController implements Initializable {
     private TextField textboxFrameWidth;
     @FXML
     private Button buttonSaveConfig;
+    @FXML
+    Label labelLowerHUE;
+    @FXML
+    Label labelLowerSAT;
+    @FXML
+    Label labelLowerVAL;
+    @FXML
+    Label labelUpperHUE;
+    @FXML
+    Label labelUpperSAT;
+    @FXML
+    Label labelUpperVAL;
     private final Configuration configuration;
     private final EventBus eventBus;
 
@@ -95,26 +104,74 @@ public class ConfigController implements Initializable {
         }
 
         // Now set the Lower Bounds for the HSV color to extract
-        if( configuration.getConfig(ConfigKey.LOWER_HUE) != null ) {
-            sliderLowerHue.setValue((int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue());
-        }
-        if( configuration.getConfig(ConfigKey.LOWER_SATURATION) != null ) {
-            sliderLowerSaturation.setValue((int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue());
-        }
-        if( configuration.getConfig(ConfigKey.LOWER_VALUE) != null ) {
-            sliderLowerValue.setValue((int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue());
-        }
+        int hue = (configuration.getConfig(ConfigKey.LOWER_HUE) != null) ?
+                (int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue() :
+                (int)ConfigKey.LOWER_HUE.getDefault().getValue();
+        int sat = (configuration.getConfig(ConfigKey.LOWER_SATURATION) != null) ?
+                (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue() :
+                (int)ConfigKey.LOWER_SATURATION.getDefault().getValue();
+        int val = (configuration.getConfig(ConfigKey.LOWER_VALUE) != null) ?
+                (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue() :
+                (int)ConfigKey.LOWER_VALUE.getDefault().getValue();
+        labelLowerHUE.setText("HUE " + hue);
+        // Set Lower hue slider
+        sliderLowerHue.setValue(hue);
+        sliderLowerHue.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderLowerHue.setValue(roundedValue);
+            labelLowerHUE.setText("HUE " + (int)roundedValue);
+        });
+        labelLowerSAT.setText("SAT " + sat);
+        // Set Lower saturation slider
+        sliderLowerSaturation.setValue(sat);
+        sliderLowerSaturation.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderLowerSaturation.setValue(roundedValue);
+            labelLowerSAT.setText("SAT " + (int)roundedValue);
+        });
+        labelLowerVAL.setText("VAL " + val);
+        // Set Lower value slider
+        sliderLowerValue.setValue(val);
+        sliderLowerValue.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderLowerValue.setValue(roundedValue);
+            labelLowerVAL.setText("VAL " + (int)roundedValue);
+        });
 
         // Now set the Upper Bounds for the HSV color to extract
-        if( configuration.getConfig(ConfigKey.UPPER_HUE) != null ) {
-            sliderUpperHue.setValue((int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue());
-        }
-        if( configuration.getConfig(ConfigKey.UPPER_SATURATION) != null ) {
-            sliderUpperSaturation.setValue((int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue());
-        }
-        if( configuration.getConfig(ConfigKey.UPPER_VALUE) != null ) {
-            sliderUpperValue.setValue((int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue());
-        }
+        hue = (configuration.getConfig(ConfigKey.UPPER_HUE) != null) ?
+                (int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue() :
+                (int)ConfigKey.UPPER_HUE.getDefault().getValue();
+        sat = (configuration.getConfig(ConfigKey.UPPER_SATURATION) != null) ?
+                (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue() :
+                (int)ConfigKey.UPPER_SATURATION.getDefault().getValue();
+        val = (configuration.getConfig(ConfigKey.UPPER_VALUE) != null) ?
+                (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue() :
+                (int)ConfigKey.UPPER_VALUE.getDefault().getValue();
+        labelUpperHUE.setText("HUE " + hue);
+        // Set Upper hue slider
+        sliderUpperHue.setValue(hue);
+        sliderUpperHue.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderUpperHue.setValue(roundedValue);
+            labelUpperHUE.setText("HUE " + (int)roundedValue);
+        });
+        labelUpperSAT.setText("SAT " + sat);
+        // Set Upper saturation slider
+        sliderUpperSaturation.setValue(sat);
+        sliderUpperSaturation.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderUpperSaturation.setValue(roundedValue);
+            labelUpperSAT.setText("SAT " + (int)roundedValue);
+        });
+        labelUpperVAL.setText("VAL " + val);
+        // Set Upper value slider
+        sliderUpperValue.setValue(val);
+        sliderUpperValue.valueProperty().addListener((observable, oldValue, newValue) -> {
+            double roundedValue = Math.round(newValue.doubleValue());
+            sliderUpperValue.setValue(roundedValue);
+            labelUpperVAL.setText("VAL " + (int)roundedValue);
+        });
 
         // Last lets set the Frame Height and Width values.
         if( configuration.getConfig(ConfigKey.FRAME_HEIGHT) != null ) {
