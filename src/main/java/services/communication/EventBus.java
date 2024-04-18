@@ -23,11 +23,7 @@ public class EventBus {
     }
 
     public void register(String eventName, EventListener listener) {
-        Set<EventListener> eventListeners = listeners.get(eventName);
-        if (eventListeners == null) {
-            eventListeners = new HashSet<>();
-            listeners.put(eventName, eventListeners);
-        }
+        Set<EventListener> eventListeners = listeners.computeIfAbsent(eventName, ignoredKey -> new HashSet<>());
         eventListeners.add(listener);
     }
 

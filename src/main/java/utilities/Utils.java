@@ -36,7 +36,7 @@ public class Utils {
 
     public static Mat loadImage(String path, Size size) {
         // All backgrounds are in the resources/backgrounds directory.
-        Path background = getRootResource(ConfigKey.BACKGROUND_DIR.getDefault().getValue() + "/" + path);
+        Path background = getRootResource(ConfigKey.BACKGROUND_DIR.getDefault().value() + "/" + path);
         //System.out.printf("%s%n%s%n%s%n", "~".repeat(80), background, "~".repeat(80));
         if(background == null) {return null;}  // Handle case where the directory can't be located.
         File file = background.toFile();

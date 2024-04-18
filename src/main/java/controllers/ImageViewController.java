@@ -42,11 +42,11 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         configuration = Configuration.getInstance();
         capture = new VideoCapture();
         if(configuration.getConfig(ConfigKey.CAMERA) != null) {
-            cameraIndex = (int)configuration.getConfig(ConfigKey.CAMERA).getValue();
+            cameraIndex = (int)configuration.getConfig(ConfigKey.CAMERA).value();
         }
         desiredSize = new Size(
-                (int)configuration.getConfig(ConfigKey.FRAME_WIDTH).getValue(),
-                (int)configuration.getConfig(ConfigKey.FRAME_HEIGHT).getValue()
+                (int)configuration.getConfig(ConfigKey.FRAME_WIDTH).value(),
+                (int)configuration.getConfig(ConfigKey.FRAME_HEIGHT).value()
         );
         threadStopFlag = false;
     }
@@ -67,7 +67,7 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
             Utils.handleError("Unable to open configured webcam.");
         }
 
-        String background = (String)configuration.getConfig(ConfigKey.BACKGROUND).getValue();
+        String background = (String)configuration.getConfig(ConfigKey.BACKGROUND).value();
         // Initialize the Mat buffer for double buffering frame results.
         matBuffer = new MatBuffer();
         // Initialize the image buffer, which is my attempt to double buffer.
@@ -85,9 +85,9 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
     @Override
     public void onEvent(EventBusData<?> eventData) {
         String data = "";
-        if(eventData.getEventData() != null) { data = eventData.getEventData().toString(); }
+        if(eventData.eventData() != null) { data = eventData.eventData().toString(); }
 
-        if(eventData.getType().equals("SCENE_SWAP_REQUEST")) {
+        if(eventData.type().equals("SCENE_SWAP_REQUEST")) {
             //System.out.println(data);
             if (!data.equals("imageView.fxml")) { // Only halt if not my own view being changed to.
                 // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
@@ -129,14 +129,14 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         Mat result;
 
         // Define lower and upper bounds for green color in HSV (Hue, Saturation, Value)
-        int hue = (int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue();
-        int sat = (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue();
-        int val = (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue();
+        int hue = (int)configuration.getConfig(ConfigKey.LOWER_HUE).value();
+        int sat = (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).value();
+        int val = (int)configuration.getConfig(ConfigKey.LOWER_VALUE).value();
         //System.out.printf("L-H:%d,S:%d,V:%d%n", hue, sat, val);
         Scalar lowerBound = new Scalar(hue, sat, val);  // Lower Green
-        hue = (int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue();
-        sat = (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue();
-        val = (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue();
+        hue = (int)configuration.getConfig(ConfigKey.UPPER_HUE).value();
+        sat = (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).value();
+        val = (int)configuration.getConfig(ConfigKey.UPPER_VALUE).value();
         //System.out.printf("U-H:%d,S:%d,V:%d%n", hue, sat, val);
         Scalar upperBound = new Scalar(hue, sat, val);  // Upper Green
         boolean sizingErrorReported = false;

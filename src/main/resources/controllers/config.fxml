@@ -60,14 +60,14 @@
                <children>
                   <HBox prefHeight="50.0">
                      <children>
-                        <Label prefWidth="80.0" text="Frame Height" />
-                        <TextField fx:id="textboxFrameHeight" />
+                        <Label fx:id="labelFrameWidth" prefWidth="80.0" text="Frame Width" />
+                        <TextField fx:id="textboxFrameWidth" />
                      </children>
                   </HBox>
                   <HBox prefHeight="50.0">
                      <children>
-                        <Label prefWidth="80.0" text="Frame Width" />
-                        <TextField fx:id="textboxFrameWidth" />
+                        <Label fx:id="labelFrameHeight" prefWidth="80.0" text="Frame Height" />
+                        <TextField fx:id="textboxFrameHeight" />
                      </children>
                   </HBox>
                   <Label text="UPPER BOUND HSV">

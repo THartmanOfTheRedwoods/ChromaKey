@@ -76,6 +76,10 @@ public class ConfigController implements Initializable {
     Label labelUpperSAT;
     @FXML
     Label labelUpperVAL;
+    @FXML
+    Label labelFrameWidth;
+    @FXML
+    Label labelFrameHeight;
     private final Configuration configuration;
     private final EventBus eventBus;
 
@@ -94,13 +98,16 @@ public class ConfigController implements Initializable {
         // Called after @FXML annotations are injected.
 
         // Let's initialize controller components and show previous configuration if it exists.
-        // First we need to populate the Backgrounds list with available background images.
+        // First Let's set the labels for Frame Width and Frame Height settings.
+        labelFrameWidth.setText(ConfigKey.FRAME_WIDTH.getLabel());
+        labelFrameHeight.setText(ConfigKey.FRAME_HEIGHT.getLabel());
+        // Second we need to populate the Backgrounds list with available background images.
         try {
             ObservableList<String> backgroundFiles = getBackgroundFiles(
-                    (String) ConfigKey.BACKGROUND_DIR.getDefault().getValue());
+                    (String) ConfigKey.BACKGROUND_DIR.getDefault().value());
             listBackgrounds.setItems(backgroundFiles);
             if (configuration.getConfig(ConfigKey.BACKGROUND) != null) {
-                int index = backgroundFiles.indexOf((String)configuration.getConfig(ConfigKey.BACKGROUND).getValue());
+                int index = backgroundFiles.indexOf((String)configuration.getConfig(ConfigKey.BACKGROUND).value());
                 if (index != -1) {
                     listBackgrounds.getSelectionModel().select(index);
                 } else {
@@ -117,7 +124,7 @@ public class ConfigController implements Initializable {
         ObservableList<Integer> cameras = getCameras();
         listCamera.setItems(getCameras());
         if( configuration.getConfig(ConfigKey.CAMERA) != null ) {
-            int index = cameras.indexOf((Integer)configuration.getConfig(ConfigKey.CAMERA).getValue());
+            int index = cameras.indexOf((Integer)configuration.getConfig(ConfigKey.CAMERA).value());
             if (index != -1) {
                 listCamera.getSelectionModel().select(index);
             } else {
@@ -127,14 +134,14 @@ public class ConfigController implements Initializable {
 
         // Now set the Lower Bounds for the HSV color to extract
         int hue = (configuration.getConfig(ConfigKey.LOWER_HUE) != null) ?
-                (int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue() :
-                (int)ConfigKey.LOWER_HUE.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.LOWER_HUE).value() :
+                (int)ConfigKey.LOWER_HUE.getDefault().value();
         int sat = (configuration.getConfig(ConfigKey.LOWER_SATURATION) != null) ?
-                (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue() :
-                (int)ConfigKey.LOWER_SATURATION.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).value() :
+                (int)ConfigKey.LOWER_SATURATION.getDefault().value();
         int val = (configuration.getConfig(ConfigKey.LOWER_VALUE) != null) ?
-                (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue() :
-                (int)ConfigKey.LOWER_VALUE.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.LOWER_VALUE).value() :
+                (int)ConfigKey.LOWER_VALUE.getDefault().value();
         labelLowerHUE.setText(HSVLabels.HUE.getLabel(hue));
         // Set Lower hue slider
         sliderLowerHue.setValue(hue);
@@ -162,14 +169,14 @@ public class ConfigController implements Initializable {
 
         // Now set the Upper Bounds for the HSV color to extract
         hue = (configuration.getConfig(ConfigKey.UPPER_HUE) != null) ?
-                (int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue() :
-                (int)ConfigKey.UPPER_HUE.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.UPPER_HUE).value() :
+                (int)ConfigKey.UPPER_HUE.getDefault().value();
         sat = (configuration.getConfig(ConfigKey.UPPER_SATURATION) != null) ?
-                (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue() :
-                (int)ConfigKey.UPPER_SATURATION.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).value() :
+                (int)ConfigKey.UPPER_SATURATION.getDefault().value();
         val = (configuration.getConfig(ConfigKey.UPPER_VALUE) != null) ?
-                (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue() :
-                (int)ConfigKey.UPPER_VALUE.getDefault().getValue();
+                (int)configuration.getConfig(ConfigKey.UPPER_VALUE).value() :
+                (int)ConfigKey.UPPER_VALUE.getDefault().value();
         labelUpperHUE.setText(HSVLabels.HUE.getLabel(hue));
         // Set Upper hue slider
         sliderUpperHue.setValue(hue);
@@ -197,10 +204,10 @@ public class ConfigController implements Initializable {
 
         // Last lets set the Frame Height and Width values.
         if( configuration.getConfig(ConfigKey.FRAME_HEIGHT) != null ) {
-            textboxFrameHeight.setText(configuration.getConfig(ConfigKey.FRAME_HEIGHT).getValue().toString());
+            textboxFrameHeight.setText(configuration.getConfig(ConfigKey.FRAME_HEIGHT).value().toString());
         }
         if( configuration.getConfig(ConfigKey.FRAME_WIDTH) != null ) {
-            textboxFrameWidth.setText(configuration.getConfig(ConfigKey.FRAME_WIDTH).getValue().toString());
+            textboxFrameWidth.setText(configuration.getConfig(ConfigKey.FRAME_WIDTH).value().toString());
         }
     }
 
