@@ -1,3 +1,5 @@
+package controllers;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,14 +14,20 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
-
+import services.communication.EventBus;
+import services.communication.EventBusData;
+import services.configuration.ConfigKey;
+import services.configuration.Configuration;
+import utilities.MatBuffer;
+import utilities.ImageBuffer;
+import utilities.Utils;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class ImageViewController  implements Initializable, EventBus.EventListener {
     @FXML
     private ImageView imageView;
-    private VideoCapture capture;
+    private final VideoCapture capture;
     private final Configuration configuration;
     private final EventBus eventBus;
     private Thread cameraThread;
@@ -28,7 +36,7 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
     private ImageBuffer imageBuffer;
     private Mat replacementMat;
     private int cameraIndex;
-    private Size desiredSize;
+    private final Size desiredSize;
     public ImageViewController() {
         eventBus = EventBus.getInstance();
         configuration = Configuration.getInstance();
@@ -80,14 +88,17 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         if(eventData.getEventData() != null) { data = eventData.getEventData().toString(); }
 
         if(eventData.getType().equals("SCENE_SWAP_REQUEST")) {
+            //System.out.println(data);
             if (!data.equals("imageView.fxml")) { // Only halt if not my own view being changed to.
                 // If I'm being asked to halt, it's likely a new object will later be created, so I also need to unregister
-                // in the EventBus
+                // in the services.communication.EventBus
                 eventBus.unregister("SCENE_SWAP_REQUEST", this);
                 eventBus.unregister(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), this);
                 haltThread();
             }
         } else {
+            // If I'm here, I don't unregister because I assume this is the only other event I'm registered to listen
+            // for (i.e. Window Close/Application Shutdown).
             haltThread();
         }
     }
@@ -107,6 +118,7 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
                 new EventBusData<Object>("CHILD_CLOSE_ACK", "ImageController"));
     }
 
+    @SuppressWarnings("BusyWait")
     private void processAndDisplayFrames() {
         //System.out.println("Starting " + Thread.currentThread().getName());
 
@@ -120,12 +132,12 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         int hue = (int)configuration.getConfig(ConfigKey.LOWER_HUE).getValue();
         int sat = (int)configuration.getConfig(ConfigKey.LOWER_SATURATION).getValue();
         int val = (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue();
-        System.out.printf("L-H:%d,S:%d,V:%d%n", hue, sat, val);
+        //System.out.printf("L-H:%d,S:%d,V:%d%n", hue, sat, val);
         Scalar lowerBound = new Scalar(hue, sat, val);  // Lower Green
         hue = (int)configuration.getConfig(ConfigKey.UPPER_HUE).getValue();
         sat = (int)configuration.getConfig(ConfigKey.UPPER_SATURATION).getValue();
         val = (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue();
-        System.out.printf("U-H:%d,S:%d,V:%d%n", hue, sat, val);
+        //System.out.printf("U-H:%d,S:%d,V:%d%n", hue, sat, val);
         Scalar upperBound = new Scalar(hue, sat, val);  // Upper Green
         boolean sizingErrorReported = false;
 
@@ -171,7 +183,7 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
             Core.bitwise_not(mask, maskI);
 
             // Buffered previous result so that we get rid of motion artifacts.
-            // @TODO: is MatBuffer better than release? Find out!
+            // @TODO: is utilities.MatBuffer better than release? Find out!
             //result.release();
             result = matBuffer.getNextFrame();
             // Apply the inverted mask to the original frame
@@ -182,7 +194,8 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
             try {
                 Core.bitwise_or(replacementMat, replacementMat, currentResult, mask);
             } catch(CvException cve) {
-                cve.printStackTrace();
+                System.err.println("OpenCV native error in mat replacement.");
+                //cve.printStackTrace();
             }
             //currentResult.copyTo(replacementMat, mask);
 

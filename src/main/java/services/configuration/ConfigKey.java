@@ -1,3 +1,7 @@
+package services.configuration;
+
+import services.configuration.ConfigItem;
+
 public enum ConfigKey {
     BACKGROUND_DIR("Background Directory", new ConfigItem<String>("backgrounds")),
     BACKGROUND("Background", new ConfigItem<String>("tiger.jpg")),

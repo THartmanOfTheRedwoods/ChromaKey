@@ -1,3 +1,5 @@
+package services.communication;
+
 public class EventBusData<T> {
     private final String type;
     private final T eventData;

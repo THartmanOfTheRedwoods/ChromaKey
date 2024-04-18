@@ -1,3 +1,5 @@
+package services.communication;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
@@ -8,7 +10,7 @@ public class EventBus {
     }
     private final Map<String, Set<EventListener>> listeners;
 
-    // Private constructor so instances of Configuration can't be called from external class.
+    // Private constructor so instances of services.configuration.Configuration can't be called from external class.
     private EventBus(){
         listeners = new HashMap<>();
     }
@@ -41,7 +43,7 @@ public class EventBus {
     // Private static inner class with static instance.
     // Class doesn't load until getInstance is called.
     // Thread-Safe because SingletonHelper class and INSTANCE are static.
-    // Returns a single instance of Outer class Configuration and can because its in Configuration's scope.
+    // Returns a single instance of Outer class services.configuration.Configuration and can because its in services.configuration.Configuration's scope.
     private static class SingletonHelper {
         private static final EventBus INSTANCE = new EventBus();
     }

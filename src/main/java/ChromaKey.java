@@ -5,6 +5,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
+import services.communication.EventBus;
+import services.communication.EventBusData;
 
 import java.io.IOException;
 
@@ -28,22 +30,28 @@ public class ChromaKey extends Application {
 
         primaryStage.setOnCloseRequest(event -> {
             // Register to get notified when child controllers/threads exit.
-            eventBus.register("CHILD_CLOSE_ACK", (eventData) -> {
+            eventBus.register("CHILD_CLOSE_ACK", (ignoredEventData) -> {
                 allDone = true; // Once exited, we set this to true to allow the application to exit.
             });
             // Fire close event so child controllers/threads will close down and exit.
             eventBus.fireEvent(event.getEventType().getName(),
-                    new EventBusData<Object>(event.getEventType().getName(), null));
+                    new EventBusData<>(event.getEventType().getName(), null));
             // Let's sleep a bit to allow the child threads a chance to close.
             try {
-                // Busy wait until child controller notifies us that its done.
+                // Busy wait until child controller notifies us that it's done.
+                int count = 10;  // Used to force termination if this App hasn't been messaged in 500*10 = 5 seconds
                 while(!allDone) {
+                    count--;
                     Thread.sleep(500);
+                    if(count <= 0) {
+                        System.err.println("Forcing application shutdown");
+                        System.exit(-1);
+                    }
                 }
-            } catch (InterruptedException e) { }
+            } catch (InterruptedException _) { }
         });
 
-        eventBus.register("CHILD_CLOSE_REQUEST", (eventData) -> {
+        eventBus.register("CHILD_CLOSE_REQUEST", (ignoredEventData) -> {
             // This event comes from the child, so I forward it on to my setOnCloseRequest handler.
             primaryStage.fireEvent(new WindowEvent(primaryStage, WindowEvent.WINDOW_CLOSE_REQUEST));
         });

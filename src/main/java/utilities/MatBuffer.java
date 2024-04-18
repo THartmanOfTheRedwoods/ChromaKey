@@ -1,3 +1,5 @@
+package utilities;
+
 import org.opencv.core.Mat;
 
 public class MatBuffer {

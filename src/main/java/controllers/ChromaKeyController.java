@@ -1,3 +1,5 @@
+package controllers;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -6,8 +8,9 @@ import javafx.scene.Parent;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import services.communication.EventBus;
+import services.communication.EventBusData;
+import utilities.Utils;
 
 import java.io.IOException;
 import java.net.URL;
@@ -25,34 +28,29 @@ public class ChromaKeyController implements Initializable {
     MenuItem menuItemPreferences;
     @FXML
     MenuItem menuItemQuit;
-    @FXML
-    private Stage primaryStage;
     private final EventBus eventBus;
-    private final Configuration configuration;
     public ChromaKeyController() {
-        configuration = Configuration.getInstance();
         eventBus = EventBus.getInstance();
     }
-
-    private FXMLLoader contentLoader; // Loader for content FXML
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         menuItemImageView.setDisable(true);  // Start with the imageView active
         menuItemPreferences.setDisable(false);
-        contentLoader = new FXMLLoader(getClass().getResource("imageView.fxml"));
+        FXMLLoader contentLoader = new FXMLLoader(getClass().getResource("imageView.fxml"));
         try {
             Parent initialContent = contentLoader.load();
             contentPane.getChildren().add(initialContent);
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.handleError("Error loading default content view.");
+            //e.printStackTrace();
         }
     }
 
     public void swapContent(String fxmlFileName) throws IOException {
         // Do this first to make sure content panes don't swap before the event is triggered.
         eventBus.fireEvent("SCENE_SWAP_REQUEST",
-                new EventBusData<String>("SCENE_SWAP_REQUEST", fxmlFileName));
+                new EventBusData<>("SCENE_SWAP_REQUEST", fxmlFileName));
         // Load the new content FXML
         FXMLLoader newLoader = new FXMLLoader(getClass().getResource(fxmlFileName));
         Parent newContent = newLoader.load();
@@ -62,31 +60,33 @@ public class ChromaKeyController implements Initializable {
     }
 
     @FXML
-    public void onPreferencesSelected(ActionEvent event) {
+    public void onPreferencesSelected(ActionEvent ignoredEvent) {
         try {
             menuItemImageView.setDisable(false);
             menuItemPreferences.setDisable(true);
             swapContent("config.fxml"); // Replace with the FXML file for content 1
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.handleError("Error swapping to configuration content.");
+            //e.printStackTrace();
         }
     }
 
     @FXML
-    public void onImageSelected(ActionEvent event) {
+    public void onImageSelected(ActionEvent ignoredEvent) {
         try {
             menuItemImageView.setDisable(true);
             menuItemPreferences.setDisable(false);
             swapContent("imageView.fxml"); // Replace with the FXML file for content 2
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.handleError("Error swapping to video content.");
+            //e.printStackTrace();
         }
     }
 
     @FXML
-    public void onQuitSelected(ActionEvent event) {
+    public void onQuitSelected(ActionEvent ignoredEvent) {
         // ChromaKey is set up to listen to this even on the bus.
         eventBus.fireEvent("CHILD_CLOSE_REQUEST",
-                new EventBusData<Object>("CHILD_CLOSE_REQUEST", null));
+                new EventBusData<>("CHILD_CLOSE_REQUEST", null));
     }
 }

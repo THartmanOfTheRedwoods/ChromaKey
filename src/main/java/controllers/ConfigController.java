@@ -1,3 +1,5 @@
+package controllers;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -10,20 +12,40 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 import javafx.fxml.Initializable;
+import services.communication.EventBus;
+import services.communication.EventBusData;
+import services.configuration.ConfigItem;
+import services.configuration.ConfigKey;
+import services.configuration.Configuration;
+import utilities.Utils;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class ConfigController implements Initializable {
+    // Internal Enum used for configuration HSV Labels, so I only have to change the name 1 time.
+    private enum HSVLabels {
+        HUE("HUE"),
+        SATURATION("SAT"),
+        VALUE("VAL");
+
+        private final String label;
+        HSVLabels(String label) {
+            this.label = label;
+        }
+
+        public String getLabel(int value) {
+            return "%s %d".formatted(label, value);
+        }
+    }
 
     @FXML
-    private ListView listBackgrounds;
+    private ListView<String> listBackgrounds;
     @FXML
-    private ListView listCamera;
+    private ListView<Integer> listCamera;
     @FXML
     private Slider sliderLowerHue;
     @FXML
@@ -61,10 +83,10 @@ public class ConfigController implements Initializable {
         // Called before @FXML annotations are injected.
         eventBus = EventBus.getInstance();
         configuration = Configuration.getInstance();
-        eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), (eventData) -> {
+        eventBus.register(WindowEvent.WINDOW_CLOSE_REQUEST.getName(), (ignoredEventData) -> {
             // Acknowledge parent close request that we closed down.
             eventBus.fireEvent("CHILD_CLOSE_ACK",
-                    new EventBusData<Object>("CHILD_CLOSE_ACK", "ConfigController"));
+                    new EventBusData<Object>("CHILD_CLOSE_ACK", "controllers.ConfigController"));
         });
     }
 
@@ -75,20 +97,20 @@ public class ConfigController implements Initializable {
         // First we need to populate the Backgrounds list with available background images.
         try {
             ObservableList<String> backgroundFiles = getBackgroundFiles(
-                    (String)ConfigKey.BACKGROUND_DIR.getDefault().getValue());
+                    (String) ConfigKey.BACKGROUND_DIR.getDefault().getValue());
             listBackgrounds.setItems(backgroundFiles);
             if (configuration.getConfig(ConfigKey.BACKGROUND) != null) {
                 int index = backgroundFiles.indexOf((String)configuration.getConfig(ConfigKey.BACKGROUND).getValue());
                 if (index != -1) {
                     listBackgrounds.getSelectionModel().select(index);
                 } else {
-                    System.err.println("Failed to set previous configuration option for backgrounds list view.");
+                    Utils.handleError( "Failed to set previous configuration option for backgrounds list view.");
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (URISyntaxException e) {
-            System.err.println("Failed to find backgrounds directory.");
+            Utils.handleError("Failed to find backgrounds directory.");
         }
 
         // Next we need to populate the Camera's list with available cameras.
@@ -99,7 +121,7 @@ public class ConfigController implements Initializable {
             if (index != -1) {
                 listCamera.getSelectionModel().select(index);
             } else {
-                System.err.println("Failed to set previous configuration option for camera list view.");
+                Utils.handleError("Failed to set previous configuration option for camera list view.");
             }
         }
 
@@ -113,29 +135,29 @@ public class ConfigController implements Initializable {
         int val = (configuration.getConfig(ConfigKey.LOWER_VALUE) != null) ?
                 (int)configuration.getConfig(ConfigKey.LOWER_VALUE).getValue() :
                 (int)ConfigKey.LOWER_VALUE.getDefault().getValue();
-        labelLowerHUE.setText("HUE " + hue);
+        labelLowerHUE.setText(HSVLabels.HUE.getLabel(hue));
         // Set Lower hue slider
         sliderLowerHue.setValue(hue);
-        sliderLowerHue.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderLowerHue.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderLowerHue.setValue(roundedValue);
-            labelLowerHUE.setText("HUE " + (int)roundedValue);
+            labelLowerHUE.setText(HSVLabels.HUE.getLabel((int)roundedValue));
         });
-        labelLowerSAT.setText("SAT " + sat);
+        labelLowerSAT.setText(HSVLabels.SATURATION.getLabel(sat));
         // Set Lower saturation slider
         sliderLowerSaturation.setValue(sat);
-        sliderLowerSaturation.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderLowerSaturation.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderLowerSaturation.setValue(roundedValue);
-            labelLowerSAT.setText("SAT " + (int)roundedValue);
+            labelLowerSAT.setText(HSVLabels.SATURATION.getLabel((int)roundedValue));
         });
-        labelLowerVAL.setText("VAL " + val);
+        labelLowerVAL.setText(HSVLabels.VALUE.getLabel(val));
         // Set Lower value slider
         sliderLowerValue.setValue(val);
-        sliderLowerValue.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderLowerValue.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderLowerValue.setValue(roundedValue);
-            labelLowerVAL.setText("VAL " + (int)roundedValue);
+            labelLowerVAL.setText(HSVLabels.VALUE.getLabel((int)roundedValue));
         });
 
         // Now set the Upper Bounds for the HSV color to extract
@@ -148,29 +170,29 @@ public class ConfigController implements Initializable {
         val = (configuration.getConfig(ConfigKey.UPPER_VALUE) != null) ?
                 (int)configuration.getConfig(ConfigKey.UPPER_VALUE).getValue() :
                 (int)ConfigKey.UPPER_VALUE.getDefault().getValue();
-        labelUpperHUE.setText("HUE " + hue);
+        labelUpperHUE.setText(HSVLabels.HUE.getLabel(hue));
         // Set Upper hue slider
         sliderUpperHue.setValue(hue);
-        sliderUpperHue.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderUpperHue.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderUpperHue.setValue(roundedValue);
-            labelUpperHUE.setText("HUE " + (int)roundedValue);
+            labelUpperHUE.setText(HSVLabels.HUE.getLabel((int)roundedValue));
         });
-        labelUpperSAT.setText("SAT " + sat);
+        labelUpperSAT.setText(HSVLabels.SATURATION.getLabel(sat));
         // Set Upper saturation slider
         sliderUpperSaturation.setValue(sat);
-        sliderUpperSaturation.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderUpperSaturation.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderUpperSaturation.setValue(roundedValue);
-            labelUpperSAT.setText("SAT " + (int)roundedValue);
+            labelUpperSAT.setText(HSVLabels.SATURATION.getLabel((int)roundedValue));
         });
-        labelUpperVAL.setText("VAL " + val);
+        labelUpperVAL.setText(HSVLabels.VALUE.getLabel(val));
         // Set Upper value slider
         sliderUpperValue.setValue(val);
-        sliderUpperValue.valueProperty().addListener((observable, oldValue, newValue) -> {
+        sliderUpperValue.valueProperty().addListener((ignoredObservable, ignoredOldValue, newValue) -> {
             double roundedValue = Math.round(newValue.doubleValue());
             sliderUpperValue.setValue(roundedValue);
-            labelUpperVAL.setText("VAL " + (int)roundedValue);
+            labelUpperVAL.setText(HSVLabels.VALUE.getLabel((int)roundedValue));
         });
 
         // Last lets set the Frame Height and Width values.
@@ -196,43 +218,43 @@ public class ConfigController implements Initializable {
     }
 
     private static ObservableList<String> getBackgroundFiles(String directoryName) throws IOException, URISyntaxException {
-        // Get the resources directory path
-        Path resourcesPath = Paths.get(ClassLoader.getSystemResource(directoryName).toURI());
+        // Get the resources directory
+        Path resourcesPath = Utils.getRootResource(directoryName);
 
         // Check if the directory exists
-        if (!Files.isDirectory(resourcesPath)) {
-            throw new IOException("Directory not found: " + resourcesPath);
+        if (resourcesPath == null || !Files.isDirectory(resourcesPath)) {
+            throw new IOException("Directory not found: %s".formatted(resourcesPath));
         }
 
         // Stream the directory entries and filter for files only
         return Files.list(resourcesPath)
-                .filter(file -> Files.isRegularFile(file))
+                .filter(Files::isRegularFile)
                 .map(file -> file.getFileName().toString()) // Get file names only
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
     }
 
     @FXML
-    private void handleSaveConfigButtonClick(ActionEvent event) {
+    private void handleSaveConfigButtonClick(ActionEvent ignoredEvent) {
         // Let's Update our configuration with all the values we just saved.
         configuration.addConfig(ConfigKey.BACKGROUND,
-                new ConfigItem<String>(listBackgrounds.getSelectionModel().getSelectedItem().toString()));
+                new ConfigItem<>(listBackgrounds.getSelectionModel().getSelectedItem()));
         configuration.addConfig(ConfigKey.CAMERA,
-                new ConfigItem<Integer>((int)listCamera.getSelectionModel().getSelectedItem()));
+                new ConfigItem<>(listCamera.getSelectionModel().getSelectedItem()));
         configuration.addConfig(ConfigKey.LOWER_HUE,
-                new ConfigItem<Integer>((int)sliderLowerHue.getValue()));
+                new ConfigItem<>((int)sliderLowerHue.getValue()));
         configuration.addConfig(ConfigKey.LOWER_SATURATION,
-                new ConfigItem<Integer>((int)sliderLowerSaturation.getValue()));
+                new ConfigItem<>((int)sliderLowerSaturation.getValue()));
         configuration.addConfig(ConfigKey.LOWER_VALUE,
-                new ConfigItem<Integer>((int)sliderLowerValue.getValue()));
+                new ConfigItem<>((int)sliderLowerValue.getValue()));
         configuration.addConfig(ConfigKey.UPPER_HUE,
-                new ConfigItem<Integer>((int)sliderUpperHue.getValue()));
+                new ConfigItem<>((int)sliderUpperHue.getValue()));
         configuration.addConfig(ConfigKey.UPPER_SATURATION,
-                new ConfigItem<Integer>((int)sliderUpperSaturation.getValue()));
+                new ConfigItem<>((int)sliderUpperSaturation.getValue()));
         configuration.addConfig(ConfigKey.UPPER_VALUE,
-                new ConfigItem<Integer>((int)sliderUpperValue.getValue()));
+                new ConfigItem<>((int)sliderUpperValue.getValue()));
         configuration.addConfig(ConfigKey.FRAME_HEIGHT,
-                new ConfigItem<Integer>(Integer.parseInt(textboxFrameHeight.getText())));
+                new ConfigItem<>(Integer.parseInt(textboxFrameHeight.getText())));
         configuration.addConfig(ConfigKey.FRAME_WIDTH,
-                new ConfigItem<Integer>(Integer.parseInt(textboxFrameWidth.getText())));
+                new ConfigItem<>(Integer.parseInt(textboxFrameWidth.getText())));
     }
 }
