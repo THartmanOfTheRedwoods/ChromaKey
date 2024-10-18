@@ -40,6 +40,11 @@ public class ChromaKeyController implements Initializable {
         FXMLLoader contentLoader = new FXMLLoader(getClass().getResource("imageView.fxml"));
         try {
             Parent initialContent = contentLoader.load();
+            /*
+            AnchorPane initialContent = contentLoader.load();
+            initialContent.prefWidthProperty().bind(contentPane.widthProperty());
+            initialContent.prefHeightProperty().bind(contentPane.heightProperty());
+            */
             contentPane.getChildren().add(initialContent);
         } catch (IOException e) {
             Utils.handleError("Error loading default content view.");

@@ -1,10 +1,15 @@
 package controllers;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -21,12 +26,50 @@ import services.configuration.Configuration;
 import utilities.MatBuffer;
 import utilities.ImageBuffer;
 import utilities.Utils;
+// Imports for image Capture
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.ResourceBundle;
+import javafx.embed.swing.SwingFXUtils;
+import java.io.FileWriter;
+// QR Code Imports
+import java.awt.image.BufferedImage;
+import java.util.concurrent.TimeUnit;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+// Countdown Imports
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import java.util.concurrent.CountDownLatch;
+import javafx.concurrent.Task;
+
+// @TODO: Add textbox to imageView.fxml and add Capture/Send button to take a snapshot and store/e-mail it to address in
+//   textbox!
 public class ImageViewController  implements Initializable, EventBus.EventListener {
     @FXML
+    private AnchorPane anchorpaneParent;
+    @FXML
+    private BorderPane borderpaneParent;
+    @FXML
     private ImageView imageView;
+    @FXML
+    private ImageView ivQRCode;
+    @FXML
+    private TextField txtEmail;
     private final VideoCapture capture;
     private final Configuration configuration;
     private final EventBus eventBus;
@@ -59,8 +102,33 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         capture.set(Videoio.CAP_PROP_FRAME_HEIGHT, desiredSize.height);
     }
 
+    /*
+    private void onSceneSet(Scene scene) {
+        // This method is called when the Scene is fully set up
+        scene.windowProperty().addListener((observable, oldWindow, newWindow) -> {
+            if (newWindow != null) {
+                System.out.println("Scene width: " + newWindow.getWidth());
+                anchorpaneParent.prefWidthProperty().bind(newWindow.widthProperty());
+                anchorpaneParent.prefWidthProperty().bind(newWindow.heightProperty());
+                anchorpaneParent.setPrefWidth(newWindow.getWidth());
+                anchorpaneParent.setPrefHeight(newWindow.getHeight());
+                imageView.fitWidthProperty().bind(borderpaneParent.widthProperty());
+                imageView.fitHeightProperty().bind(borderpaneParent.heightProperty());
+            }
+        });
+    }
+    */
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        /*
+        // Let's listen for when the Scene becomes available, so we can resize appropriately.
+        anchorpaneParent.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if( newScene != null ) {
+                onSceneSet(newScene);
+            }
+        });
+         */
         captureReset();
 
         if (!capture.isOpened()) {
@@ -219,4 +287,128 @@ public class ImageViewController  implements Initializable, EventBus.EventListen
         }
         //System.out.println("Stopping " + Thread.currentThread().getName());
     }
+
+    private String getFilePathHash() throws NoSuchAlgorithmException {
+        String dateTime = LocalDateTime.now().toString();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        byte[] hashBytes = md.digest(dateTime.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder hashString = new StringBuilder();
+        for (byte b : hashBytes) {
+            hashString.append(String.format("%02x", b));
+        }
+
+        return hashString.toString();
+    }
+
+    public static void appendToFile(String filePath, String content) {
+        try (FileWriter writer = new FileWriter(filePath, true)) { // true for append mode
+            writer.write(content);
+            writer.write(System.lineSeparator()); // Adds a newline after the content
+        } catch (IOException e) {
+            System.out.println("An error occurred while appending to the file: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void btnCaptureClick(ActionEvent ignoredEvent) {
+        CountDownLatch latch = showCountdownPopup();
+
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // Wait until the latch is released (i.e., the video finishes)
+                latch.await();
+                // Resume main thread actions
+                Platform.runLater(() -> { // Schedule capture to run on the JFX App, necessary for a ImageView snapshot
+                    captureImage();
+                });
+                return null;
+            }
+        };
+
+        new Thread(task).start();
+    }
+
+    private CountDownLatch showCountdownPopup() {
+        // Create a CountDownLatch to pause the execution until the video finishes
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Create a new stage for the video popup
+        Stage videoStage = new Stage();
+        videoStage.initModality(Modality.WINDOW_MODAL);
+
+        // Load the video file
+        File videoFile = Utils.getRootResource("countdown.mp4").toFile();
+        Media media = new Media(videoFile.toURI().toString());
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        MediaView mediaView = new MediaView(mediaPlayer);
+
+        // Create the video popup scene
+        StackPane videoPane = new StackPane(mediaView);
+        Scene videoScene = new Scene(videoPane, 480, 480);
+        videoStage.setScene(videoScene);
+
+        // Show the video popup and play the video
+        mediaPlayer.play();
+        videoStage.show();
+
+        mediaPlayer.setOnEndOfMedia(() -> {
+            mediaPlayer.stop();
+            videoStage.close();
+            latch.countDown();
+        });
+        return latch;
+    }
+
+    private void captureImage() {
+        System.out.println("1");
+        // Capture the ImageView content into a WritableImage
+        WritableImage writableImage = new WritableImage((int) imageView.getFitWidth(), (int) imageView.getFitHeight());
+        System.out.println("2");
+
+        // Snapshot the ImageView
+        imageView.snapshot(null, writableImage);
+        System.out.println("3");
+
+        // Convert WritableImage to BufferedImage and save as PNG
+        try {
+            System.out.println("4");
+            String dirPath = "/Users/trevorhartman/CR/thartmanoftheredwoods.mkdocs/docs";
+            String fileHash = String.format("chroma_images/%s.png", getFilePathHash());
+            String filePath = String.format("%s/%s", dirPath, fileHash);
+            String url = String.format("https://thartmanoftheredwoods.github.io/%s", fileHash);
+            File file = new File(filePath);
+            ImageIO.write(SwingFXUtils.fromFXImage(writableImage, null), "png", file);
+            appendToFile(String.format("%s/images.txt", dirPath), fileHash);
+            txtEmail.setText(url);
+            // Put up QR Code
+            Image qrCodeImage = generateQRCodeImage(url, 150, 150);
+            ivQRCode.setImage(qrCodeImage);
+        } catch (NoSuchAlgorithmException nsa) {
+            System.out.println("Failed to get md5 hash");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Image generateQRCodeImage(String data, int width, int height) {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        try {
+            BitMatrix bitMatrix = qrCodeWriter.encode(data, BarcodeFormat.QR_CODE, width, height);
+            BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bufferedImage.setRGB(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                }
+            }
+
+            return SwingFXUtils.toFXImage(bufferedImage, null);
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

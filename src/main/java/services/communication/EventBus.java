@@ -4,11 +4,14 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+
 public class EventBus {
+
+    private final Map<String, Set<EventListener>> listeners;
+
     public interface EventListener {
         void onEvent(EventBusData<?> data);
     }
-    private final Map<String, Set<EventListener>> listeners;
 
     // Private constructor so instances of services.configuration.Configuration can't be called from external class.
     private EventBus(){

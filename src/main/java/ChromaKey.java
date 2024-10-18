@@ -7,6 +7,9 @@ import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
 import services.communication.EventBus;
 import services.communication.EventBusData;
+import services.configuration.ConfigItem;
+import services.configuration.ConfigKey;
+import services.configuration.Configuration;
 
 import java.io.IOException;
 
@@ -19,6 +22,10 @@ public class ChromaKey extends Application {
     public void start(Stage primaryStage) throws IOException {
         // Load the OpenCV library
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        // Make sure the primary stage is resizeable
+        primaryStage.setResizable(true);
+        // Save primary stage to configuration singleton so other views can access the primaryStage
+        Configuration.getInstance().addConfig(ConfigKey.PRIMARY_STAGE, new ConfigItem<Stage>(primaryStage));
 
         // Load the main FXML file
         FXMLLoader loader = new FXMLLoader(getClass().getResource("mainView.fxml")); // Replace "main.fxml" with your actual filename

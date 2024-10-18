@@ -1,5 +1,7 @@
 package services.configuration;
 
+import javafx.stage.Stage;
+
 public enum ConfigKey {
     BACKGROUND_DIR("Background Directory", new ConfigItem<>("backgrounds")),
     BACKGROUND("Background", new ConfigItem<>("tiger.jpg")),
@@ -11,7 +13,8 @@ public enum ConfigKey {
     LOWER_VALUE("Lower Value", new ConfigItem<>(40)),
     UPPER_HUE("Upper Hsv", new ConfigItem<>(80)),
     UPPER_SATURATION("Upper Saturation", new ConfigItem<>(255)),
-    UPPER_VALUE("Upper Value", new ConfigItem<>(255));
+    UPPER_VALUE("Upper Value", new ConfigItem<>(255)),
+    PRIMARY_STAGE("Primary Stage", new ConfigItem<Stage>(null));
 
     private final String label;
     private final ConfigItem<?> defaultValue;
